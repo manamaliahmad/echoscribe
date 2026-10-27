@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EchoScribe — Free Local Audio Transcriber</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Inter, system-ui, sans-serif; color: #1c2420; background: #faf6ef; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 30px; letter-spacing: -.5px; }
+  h1 span { color: #1d4ed8; }
+  p.tag { color: #6b7280; font-size: 15px; margin: 6px 0 24px; line-height: 1.6; }
+  .card { background: #fff; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  label { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6b7280; margin: 0 0 6px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  select, input[type="file"] { width: 100%; padding: 10px 12px; border: 1px solid #e7e0d3; border-radius: 10px; font: inherit; font-size: 14px; background: #fff; outline: none; }
+  select:focus { border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29,78,216,.15); }
+  .drop { border: 2px dashed #cbd5e1; border-radius: 14px; padding: 26px; text-align: center; color: #6b7280; cursor: pointer; margin-top: 14px; }
+  .drop:hover, .drop.over { border-color: #1d4ed8; color: #1d4ed8; background: #eff6ff; }
+  .drop input { display: none; }
+  #fileInfo { margin-top: 12px; font-size: 14px; color: #444; }
+  button.main { width: 100%; margin-top: 16px; border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 16px; padding: 13px; border-radius: 99px; background: #1f3d2b; color: #fff; }
+  button.main:disabled { opacity: .55; cursor: wait; }
+  button.small { border: 1px solid #e7e0d3; background: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 99px; }
+  #status { margin-top: 14px; font-size: 14px; color: #6b7280; line-height: 1.6; min-height: 22px; }
+  #status.err { color: #b91c1c; }
+  #status.ok { color: #2c5a3f; }
+  .bar { height: 10px; background: #eef0ea; border-radius: 99px; overflow: hidden; margin-top: 10px; display: none; }
+  .bar i { display: block; height: 100%; width: 0%; background: #1d4ed8; border-radius: 99px; transition: width .2s; }
+  #output { width: 100%; min-height: 220px; padding: 14px; border: 1px solid #e7e0d3; border-radius: 12px; font: inherit; font-size: 15px; line-height: 1.7; background: #fff; resize: vertical; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; align-items: center; }
+  .meta span { font-size: 13px; color: #444; background: #f3f4f1; border-radius: 99px; padding: 5px 11px; }
+  .chunks { margin-top: 12px; font-size: 14px; line-height: 1.8; color: #444; }
+  .chunks b { color: #1d4ed8; font-variant-numeric: tabular-nums; }
+  .foot { margin-top: 18px; font-size: 13px; color: #6b7280; line-height: 1.7; }
+  .foot a { color: #1d4ed8; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: #444; margin-top: 12px; }
+  .check input { width: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Echo<span>Scribe</span></h1>
+  <p class="tag">Free, unlimited audio → text. Open-source Whisper runs <b>on your PC</b> — no server, no account, no per-minute cost. Your audio never leaves this device.</p>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>Model (downloaded once, then works offline)</label>
+        <select id="modelSelect">
+          <option value="onnx-community/whisper-tiny">Tiny — fastest, ~40 MB</option>
+          <option value="onnx-community/whisper-base" selected>Base — balanced, ~75 MB (recommended)</option>
+          <option value="onnx-community/whisper-small">Small — best quality, ~250 MB</option>
+          <option value="onnx-community/whisper-large-v3">Large-v3 — world-class, ~3 GB, needs 8 GB+ RAM</option>
+        </select>
+      </div>
+      <div>
+        <label>Spoken language</label>
+        <select id="langSelect">
+          <option value="">Auto-detect</option>
+          <option value="english">English</option>
+          <option value="urdu">Urdu</option>
+          <option value="hindi">Hindi</option>
+          <option value="arabic">Arabic</option>
+          <option value="spanish">Spanish</option>
+          <option value="french">French</option>
+          <option value="german">German</option>
+          <option value="chinese">Chinese</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="drop" id="dropZone">
+      <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.flac,.aac">
+      <div><b>Drop an audio file here</b> or click to choose one</div>
+      <div style="margin-top:6px;font-size:13px">MP3, WAV, M4A, OGG, WebM, FLAC — any length</div>
+    </div>
+    <div id="fileInfo"></div>
+
+    <button class="main" id="transcribeBtn" disabled>Transcribe</button>
+    <div id="status">Choose an audio file to begin. First run downloads the model once (free, from Hugging Face) and caches it — after that it works offline.</div>
+    <div class="bar" id="barWrap"><i id="barFill"></i></div>
+    <div class="meta" id="metaRow" style="display:none">
+      <span id="metaModel"></span>
+      <span id="metaDevice"></span>
+      <span id="metaTime"></span>
+      <span id="metaAudio"></span>
+    </div>
+  </div>
+
+  <div class="card" id="outCard" style="display:none">
+    <label>Transcript</label>
+    <textarea id="output" readonly placeholder="Your transcript will appear here…"></textarea>
+    <div class="meta">
+      <button class="small" id="copyBtn">Copy transcript</button>
+      <button class="small" id="downloadBtn">Download .txt</button>
+    </div>
+    <label class="check"><input type="checkbox" id="tsToggle"> Show timestamps</label>
+    <div class="chunks" id="chunksEl" style="display:none"></div>
+  </div>
+
+  <p class="foot">Privacy: the Whisper model runs inside this browser tab on your CPU/GPU. Audio is decoded locally and never uploaded anywhere — the only download is the model itself, once, from Hugging Face. No account, no limits, no cost, ever.<br>
+  If you see an error mentioning <b>wasm</b> or <b>jsep</b>, the engine file is missing: download <a id="wasmLink" href="https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm" target="_blank" rel="noopener">ort-wasm-simd-threaded.jsep.wasm</a> and place it in the extension's <b>lib/</b> folder, then reload this page.</p>
+</div>
+<script type="module" src="transcribe.js"></script>
+</body>
+</html>

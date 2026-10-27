@@ -1,0 +1,9 @@
+EchoScribe needs ONE engine file before first use (21.6 MB, one-time download):
+  https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm
+Steps:
+  1. Download the file above (browser download, ~21 MB).
+  2. Place it in this extension folder under lib/  (so the path is lib/ort-wasm-simd-threaded.jsep.wasm).
+  3. Load the extension unpacked in chrome://extensions and click the icon.
+Why a separate download? The file is a binary engine (not text), so it cannot
+travel inside the small chat zip. For GitHub installs, upload the same file
+via the website into lib/ (GitHub web upload allows files under 25 MB).
