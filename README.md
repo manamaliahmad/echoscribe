@@ -201,7 +201,7 @@ relative files above, so the extension needs no import map and no remote code
 
 - **Manifest V3**, vanilla JavaScript, zero build step
 - **@huggingface/transformers v3** (web build) + **onnxruntime-web**
-- **OpenAI Whisper** (`onnx-community/whisper-{tiny,base,small}`), MIT licensed
+- **OpenAI Whisper** (`onnx-community/whisper-{tiny,base,small,large-v3}`), MIT licensed
 - Web Audio API for decode + 16 kHz resampling; Cache API for offline models
 
 ## ❓ Troubleshooting
@@ -209,7 +209,7 @@ relative files above, so the extension needs no import map and no remote code
 | Problem | Fix |
 |---|---|
 | Error mentions `wasm` / `jsep` | The engine file is missing from `lib/` — see the install step above. |
-| Model download is slow | First run only; Tiny is ~40 MB, Small ~250 MB. After that, cached offline. |
+| Model download is slow | First run only; Tiny is ~40 MB, Small ~250 MB, Large-v3 ~3 GB. After that, cached offline. |
 | "Could not decode this file" | Chrome can't decode that container — convert to MP3/WAV and retry. |
 | Transcription is slow | Normal on CPU — Small on a weak CPU is slower than realtime. Use Tiny/Base, or a PC with WebGPU. |
 | Tab frozen during long files | The model works in chunks; keep the tab in focus. A background-worker version is on the roadmap. |
